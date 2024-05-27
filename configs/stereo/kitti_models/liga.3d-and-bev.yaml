@@ -13,22 +13,22 @@ DATA_CONFIG:
 MODEL:
     NAME: stereo_LIGA
 
-    LIDAR_MODEL:
-        NAME: SECONDNet
-        RETURN_BATCH_DICT: True
-        PRETRAINED_MODEL: './ckpt/second_s4_hg.iouloss.ep78.backbone-no-final-bnrelu.input-only-xyz.default-lr-policy-with-wd-decay-78ep.pth'
+    # LIDAR_MODEL:
+    #     NAME: SECONDNet
+    #     RETURN_BATCH_DICT: True
+    #     PRETRAINED_MODEL: './ckpt/second_s4_hg.iouloss.ep78.backbone-no-final-bnrelu.input-only-xyz.default-lr-policy-with-wd-decay-78ep.pth'
 
-        VFE:
-            NAME: MeanVFE
-        BACKBONE_3D:
-            NAME: VoxelBackBone4xNoFinalBnReLU
-        MAP_TO_BEV:
-            NAME: HeightCompression
-            NUM_BEV_FEATURES: 160
-        BACKBONE_2D:
-            NAME: HgBEVBackbone
-            num_channels: 64
-            GN: False
+    #     VFE:
+    #         NAME: MeanVFE
+    #     BACKBONE_3D:
+    #         NAME: VoxelBackBone4xNoFinalBnReLU
+    #     MAP_TO_BEV:
+    #         NAME: HeightCompression
+    #         NUM_BEV_FEATURES: 160
+    #     BACKBONE_2D:
+    #         NAME: HgBEVBackbone
+    #         num_channels: 64
+    #         GN: False
     
     BACKBONE_3D:
         NAME: LigaBackbone
@@ -233,9 +233,9 @@ MODEL:
                 'code_weights': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
             }
     
-    DEPTH_LOSS_HEAD:
-        LOSS_TYPE: {'ce': 1.0}
-        WEIGHTS: [1.0]  # [1.0, 1.0]
+    # DEPTH_LOSS_HEAD:
+    #     LOSS_TYPE: {'ce': 1.0}
+    #     WEIGHTS: [1.0]  # [1.0, 1.0]
 
     POST_PROCESSING:
         RECALL_THRESH_LIST: [0.3, 0.5, 0.7]

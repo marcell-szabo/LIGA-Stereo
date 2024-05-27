@@ -3,12 +3,13 @@ from torch.utils.data import DataLoader
 from torch.utils.data import DistributedSampler as _DistributedSampler
 
 from .kitti.lidar_kitti_dataset import LiDARKittiDataset
-from .kitti.stereo_kitti_dataset import StereoKittiDataset
+from .kitti.stereo_kitti_dataset import StereoKittiDataset, StereoKittiInferDataset
 from liga.utils import common_utils
 
 __all__ = {
     'LiDARKittiDataset': LiDARKittiDataset,
-    'StereoKittiDataset': StereoKittiDataset
+    'StereoKittiDataset': StereoKittiDataset,
+    'StereoKittiInferDataset': StereoKittiInferDataset
 }
 
 

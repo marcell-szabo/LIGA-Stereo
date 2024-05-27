@@ -10,7 +10,7 @@ export OPENBLAS_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 
 set -x
-python -m torch.distributed.launch --nproc_per_node=${NGPUS} tools/test.py \
+python tools/test.py \
     --launcher pytorch \
     --save_to_file \
     --cfg_file $CFG \

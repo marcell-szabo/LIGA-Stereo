@@ -28,6 +28,7 @@ class LiDARKittiDataset(DatasetTemplate):
         self.root_split_path = self.root_path / ('training' if self.split != 'test' else 'testing')
 
         split_dir = self.root_path / 'ImageSets' / (self.split + '.txt')
+        print(split_dir)
         self.sample_id_list = [x.strip() for x in open(split_dir).readlines()] if split_dir.exists() else None
 
         self.kitti_infos = []
@@ -424,9 +425,9 @@ def create_kitti_infos(dataset_cfg, class_names, data_path, save_path, workers=4
         dataset.set_split(train_split)
         dataset.create_groundtruth_database(train_filename, split=train_split)
 
-        # print('---------------Start create groundtruth database for data augmentation---------------')
-        # dataset.set_split(val_split)
-        # dataset.create_groundtruth_database(val_filename, split=val_split)
+        print('---------------Start create groundtruth database for data augmentation---------------')
+        dataset.set_split(val_split)
+        dataset.create_groundtruth_database(val_filename, split=val_split)
 
     print('---------------Data preparation Done---------------')
 
@@ -443,7 +444,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.command == 'create_kitti_infos':
-        dataset_cfg = EasyDict(yaml.load(open(args.cfg)))
+        dataset_cfg = EasyDict(yaml.load(open(args.cfg), Loader=yaml.FullLoader))
         ROOT_DIR = (Path(__file__).resolve().parent / '../../../').resolve()
         create_kitti_infos(
             dataset_cfg=dataset_cfg,
@@ -454,7 +455,7 @@ if __name__ == '__main__':
             create_gt_database=False
         )
     elif args.command == 'create_gt_database_only':
-        dataset_cfg = EasyDict(yaml.load(open(args.cfg)))
+        dataset_cfg = EasyDict(yaml.load(open(args.cfg), Loader=yaml.FullLoader))
         ROOT_DIR = (Path(__file__).resolve().parent / '../../../').resolve()
         create_kitti_infos(
             dataset_cfg=dataset_cfg,

@@ -35,7 +35,7 @@ class StereoKittiDataset(StereoDatasetTemplate):
         self.split = self.dataset_cfg.DATA_SPLIT[self.mode]
         self.root_split_path = self.root_path / \
             ('training' if self.split != 'test' else 'testing')
-
+        
         split_dir = self.root_path / 'ImageSets' / (self.split + '.txt')
         self.sample_id_list = [x.strip() for x in open(
             split_dir).readlines()] if split_dir.exists() else None
@@ -98,6 +98,7 @@ class StereoKittiDataset(StereoDatasetTemplate):
 
     def get_calib(self, idx):
         calib_file = self.root_split_path / 'calib' / ('%s.txt' % idx)
+        print(f'calib file: {calib_file}')
         assert calib_file.exists()
         return calibration_kitti.Calibration(calib_file)
 
@@ -378,8 +379,46 @@ class StereoKittiDataset(StereoDatasetTemplate):
             road_plane = self.get_road_plane(sample_idx)
             if road_plane is not None:
                 input_dict['road_plane'] = road_plane
-
         data_dict = self.prepare_data(data_dict=input_dict)
-
         data_dict['image_shape'] = img_shape
+        return data_dict
+
+
+class StereoKittiInferDataset(StereoKittiDataset):
+    def __init__(self, dataset_cfg, class_names, root_path=None, training=False, logger=None):
+        super().__init__(dataset_cfg, class_names, False, root_path, logger)
+
+    def include_kitti_data(self, mode):
+        pass
+
+    def __len__(self):
+        return 1
+    
+    def __getitem__(self, index):
+        import time
+        start_time = time.time_ns()
+        calib = self.get_calib(index)
+        calib_ori = copy.deepcopy(calib)
+
+        # img_shape = info['image']['image_shape']
+        # if self.dataset_cfg.FOV_POINTS_ONLY:
+        #     fov_flag = self.get_fov_flag(pts_rect, img_shape, calib)
+        #     pts_rect = pts_rect[fov_flag]
+        #     reflect = reflect[fov_flag]
+
+        # load images
+        left_img = self.get_image(index, 2)
+        right_img = self.get_image(index, 3)
+
+        input_dict = {
+            'frame_id': index,
+            'calib': calib,
+            'calib_ori': calib_ori,
+            'left_img': left_img,
+            'right_img': right_img,
+            'image_shape': left_img.shape
+        }
+        data_dict = input_dict
+        print(f'load data: {(time.time_ns() - start_time) / 10**9}')
+        # data_dict = self.prepare_data(data_dict=input_dict)
         return data_dict

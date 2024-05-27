@@ -91,6 +91,76 @@ def eval_one_epoch(cfg, model, dataloader, epoch_id, logger, dist_test=False, sa
             batch_dict, pred_dicts, class_names,
             output_path=final_output_dir if save_to_file else None
         ) if 'pred_scores' in pred_dicts[0] else None
+
+        print(pred_dicts[0].keys())
+
+        from liga.utils import box_utils
+        from liga.ops.iou3d_nms import iou3d_nms_utils
+        from liga.utils.open3d_utils import save_point_cloud, save_box_corners
+        import cv2
+        calib = batch_dict['calib'][0]
+        pred_boxes_cam = box_utils.boxes3d_lidar_to_kitti_camera(pred_dicts[0]['pred_boxes'].cpu().numpy(), calib)
+        gt_boxes_cam = box_utils.boxes3d_lidar_to_kitti_camera(batch_dict['gt_boxes'][0,:,:7].cpu().numpy(), calib)
+        pred_box_corners = box_utils.boxes3d_to_corners3d_kitti_camera(pred_boxes_cam)
+        gt_box_corners = box_utils.boxes3d_to_corners3d_kitti_camera(gt_boxes_cam)
+
+        try:
+            points = batch_dict['points'][:, 1:].cpu().numpy()
+            save_point_cloud(points, 'temp/pc.ply')
+            gt_lineset = save_box_corners(gt_box_corners, 'temp/gt_box.ply')
+            pred_lineset = save_box_corners(pred_box_corners, 'temp/pred_box.ply')
+
+            mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+            std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+            # img = (img.astype(np.float32) / 255 - mean) / std
+            img = batch_dict['left_img'][0].permute(1, 2, 0).cpu().numpy().copy()
+            #img = batch_dict['left_img'][0].cpu().numpy()
+            # Convert img to Mat format
+            img = (((img * std) + mean) * 255).astype(np.uint8)
+
+            gt_boxes_img, gt_box_corners_img = calib.corners3d_to_img_boxes(gt_box_corners)
+            pred_boxes_img, pred_box_corners_img = calib.corners3d_to_img_boxes(pred_box_corners)
+
+
+            def draw_image_3d_rect(img, corners_img, color):
+                edges = [(0, 1), (1, 2), (2, 3), (3, 0),
+                        (4, 5), (5, 6), (6, 7), (7, 4),
+                        (0, 4), (1, 5), (2, 6), (3, 7)]
+                for edge in edges:
+                    pt1 = tuple(map(int, corners_img[edge[0]]))
+                    pt2 = tuple(map(int, corners_img[edge[1]]))
+                    cv2.line(img, pt1, pt2, color=color, thickness=2)
+
+            for i in gt_box_corners_img:
+                draw_image_3d_rect(img, i, (0, 255, 0))
+
+            for i in pred_box_corners_img:
+                draw_image_3d_rect(img, i, (255, 0, 0))
+
+            # for line_indices in gt_lineset.lines:
+            #     pts = gt_lineset.points
+            #     pt1 = (int(pts[line_indices[0]][0]), int(pts[line_indices[0]][1]))
+            #     pt2 = (int(pts[line_indices[1]][0]), int(pts[line_indices[1]][1]))
+            #     cv2.line(img, pt1, pt2, color=(0, 255, 0), thickness=2)
+            
+            # for line_indices in pred_lineset.lines:
+            #     pt1 = (int(points[line_indices[0]][0]), int(points[line_indices[0]][1]))
+            #     pt2 = (int(points[line_indices[1]][0]), int(points[line_indices[1]][1]))
+            #     cv2.line(img, pt1, pt2, color=(255, 0, 0), thickness=2)
+
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+            # cv2.polylines(img, pred_box_corners, isClosed=True, color=(0, 255, 0), thickness=2)
+            # cv2.polylines(img, gt_box_corners, isClosed=True, color=(255, 0, 0), thickness=2)
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            cv2.imwrite('temp/left_img.jpg', img.astype(np.uint8))
+            input()
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except:
+            pass
+
+
         if annos_2d is not None:
             det_annos_2d += annos_2d
         if annos is not None:

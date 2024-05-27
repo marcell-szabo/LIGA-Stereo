@@ -1,6 +1,7 @@
 # KITTI data config for training stereo model (with imitation loss)
 
-DATASET: 'StereoKittiDataset'
+# DATASET: 'StereoKittiDataset'
+DATASET: 'StereoKittiInferDataset'
 DATA_PATH: './data/kitti'
 
 FLIP: True
@@ -47,14 +48,14 @@ TRAIN_DATA_AUGMENTOR:
     #   WORLD_SCALE_RANGE: [0.95, 1.05]
     # - NAME: random_world_translation
     #   WORLD_TRANSLATION_RANGE: [-0.4, -0.4, 0., 0.4, 0.4, 0.]
-TEST_DATA_AUGMENTOR:
-    - NAME: random_crop
-      MIN_REL_X: 0
-      MAX_REL_X: 0
-      MIN_REL_Y: 1.0
-      MAX_REL_Y: 1.0
-      MAX_CROP_H: 320
-      MAX_CROP_W: 1280  # min(MAX_CROP_W, old_w)
+# TEST_DATA_AUGMENTOR:
+#     - NAME: random_crop
+#       MIN_REL_X: 0
+#       MAX_REL_X: 0
+#       MIN_REL_Y: 1.0
+#       MAX_REL_Y: 1.0
+#       MAX_CROP_H: 320
+#       MAX_CROP_W: 1280  # min(MAX_CROP_W, old_w)
     
 POINT_FEATURE_ENCODING: {
     encoding_type: absolute_coordinates_encoding,

@@ -331,10 +331,13 @@ def boxes3d_kitti_camera_to_imageboxes(boxes3d, calib, image_shape=None, return_
             pts_img, pts_depth = calib.rect_to_img(corners3d.reshape(-1, 3))
             corners_in_image = pts_img.reshape(num_boxes, num_points, 2)
             depth_in_image = pts_depth.reshape(num_boxes, num_points)
-
-            min_uv = np.array([np.min(x[d > 0], axis=0) for x, d in zip(corners_in_image, depth_in_image)])  # (N, 2)
-            max_uv = np.array([np.max(x[d > 0], axis=0) for x, d in zip(corners_in_image, depth_in_image)])  # (N, 2)
-            boxes2d_image = np.concatenate([min_uv, max_uv], axis=1)
+            try:
+                min_uv = np.array([np.min(x[d > 0], axis=0) for x, d in zip(corners_in_image, depth_in_image)])  # (N, 2)
+                max_uv = np.array([np.max(x[d > 0], axis=0) for x, d in zip(corners_in_image, depth_in_image)])  # (N, 2)
+                boxes2d_image = np.concatenate([min_uv, max_uv], axis=1)
+            except:
+                boxes2d_image = np.zeros([0, 4], dtype=np.float32)
+                print(depth_in_image)
         else:
             boxes2d_image = np.zeros([0, 4], dtype=np.float32)
 

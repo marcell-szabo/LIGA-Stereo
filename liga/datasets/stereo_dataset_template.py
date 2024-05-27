@@ -235,6 +235,8 @@ class StereoDatasetTemplate(torch_data.Dataset):
                 assert pad_h < 32 and pad_w < 32
                 padded_imgs = []
                 for i, img in enumerate(val):
+                    if img.shape[2] > 3:
+                        img = img[:,:,:3]
                     if key in ['left_img', 'right_img']:
                         mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
                         std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
