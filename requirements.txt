@@ -6,5 +6,8 @@ numpy
 numba
 easydict
 pyyaml
-mmcv-full==1.2.1
+#mmcv-full==1.2.1
 opencv-python
+cython==0.29.33
+flask
+open3d
