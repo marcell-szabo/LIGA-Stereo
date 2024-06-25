@@ -177,7 +177,7 @@ def infer2(model, start_time):
     # gt_boxes_cam = box_utils.boxes3d_lidar_to_kitti_camera(batch_dict['gt_boxes'][0,:,:7].cpu().numpy(), calib)
     # gt_box_corners = box_utils.boxes3d_to_corners3d_kitti_camera(gt_boxes_cam)
 
-    visualizer = BEVVisualizer(fig_cfg={'figsize': (10,8)})
+    visualizer = BEVVisualizer(fig_cfg={'figsize': (5,5)})
     # set bev image in visualizer
     visualizer.set_bev_image()
     # draw bev bboxes

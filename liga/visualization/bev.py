@@ -24,15 +24,15 @@ class BEVVisualizer:
         fig = Figure(**fig_cfg)
         ax = fig.add_subplot()
         ax.axis(False)
-
         # remove white edges by set subplot margin
-        fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+        fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0, wspace=0)
+        
         canvas = FigureCanvasAgg(fig)
         self.cavas, self.fig, self.ax_save =  canvas, fig, ax
 
     def set_bev_image(self,
                         bev_image: Optional[np.ndarray] = None,
-                        bev_shape: Optional[int] = 900) -> None:
+                        bev_shape: Optional[int] = 800) -> None:
             """Set the bev image to draw.
 
             Args:
@@ -48,8 +48,15 @@ class BEVVisualizer:
             self._default_font_size = max(
                 np.sqrt(self.height * self.width) // 90, 10)
             self.ax_save.cla()
-            self.ax_save.axis(True)
+            self.ax_save.axis(False)
             self.ax_save.imshow(bev_image, origin='lower')
+            for i in range(0, self.width, 100):
+                self.ax_save.axvline(i, color='white', linestyle='-', linewidth=1,alpha=0.1)
+                self.ax_save.text(i, 0, str(np.abs(self.width/2 - i)), color='white', fontsize=8, ha='center', va='bottom')
+            for j in range(0, self.height, 100):
+                self.ax_save.axhline(j, color='white', linestyle='-', linewidth=1, alpha=0.3)
+                self.ax_save.text(0, j, str(j), color='white', fontsize=8, ha='left', va='center')
+
             # plot camera view range
             x1 = np.linspace(0, self.width / 2)
             x2 = np.linspace(self.width / 2, self.width)
@@ -140,7 +147,7 @@ class BEVVisualizer:
             line_styles=line_styles,
             line_widths=line_widths,
             face_colors=face_colors)
-        self.fig.savefig(path)
+        self.fig.savefig(path, transparent=True, bbox_inches='tight', pad_inches = 0)
 
     def _is_posion_valid(self, position: np.ndarray) -> bool:
         """Judge whether the position is in image.
