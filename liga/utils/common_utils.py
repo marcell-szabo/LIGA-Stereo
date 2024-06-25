@@ -19,7 +19,7 @@ def check_numpy_to_torch(x):
 def limit_period(val, offset=0.5, period=np.pi):
     val, is_numpy = check_numpy_to_torch(val)
     ans = val - torch.floor(val / period + offset) * period
-    return ans.numpy() if is_numpy else ans
+    return ans if is_numpy else ans
 
 
 def drop_info_with_name(info, name):

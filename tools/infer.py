@@ -13,8 +13,9 @@ import time
 from liga.utils import box_utils
 from liga.ops.iou3d_nms import iou3d_nms_utils
 from liga.utils.open3d_utils import save_point_cloud, save_box_corners
+from liga.visualization.bev import BEVVisualizer
+from mmdetection_kitti.mmdet.utils.det3d.kitti_utils import boxes3d_to_bev_torch
 import copy
-
 
 app = Flask(__name__)
 upload_folder = os.path.join('data', 'kitti', 'training')
@@ -158,14 +159,29 @@ def infer2(model, start_time):
     infer_end_time = time.time_ns()
     print(f'infer time: {(infer_end_time - infer_start_time) / 10**9}')
     disp_dict = {}
+    for i in range(len(pred_dicts)):
+        print(f'{i}. dict {pred_dicts[i]["pred_boxes_2d"]}')
+        print(f'{i}. dict {pred_dicts[i]["pred_scores_2d"]}')
 
     transform_start_time = time.time_ns()
     calib = batch_dict['calib'][0]
+    # bev_boxes = box_utils.boxes3d_lidar_to_aligned_bev_boxes(pred_dicts[0]['pred_boxes'].cpu())
+    # print(bev_boxes)
     pred_boxes_cam = box_utils.boxes3d_lidar_to_kitti_camera(pred_dicts[0]['pred_boxes'].cpu().numpy(), calib)
-    # gt_boxes_cam = box_utils.boxes3d_lidar_to_kitti_camera(batch_dict['gt_boxes'][0,:,:7].cpu().numpy(), calib)
     pred_box_corners = box_utils.boxes3d_to_corners3d_kitti_camera(pred_boxes_cam)
+    
+    bev_boxes = boxes3d_to_bev_torch(torch.from_numpy(pred_boxes_cam))
+    # print(bev_boxes)
+
+    # ground truths
+    # gt_boxes_cam = box_utils.boxes3d_lidar_to_kitti_camera(batch_dict['gt_boxes'][0,:,:7].cpu().numpy(), calib)
     # gt_box_corners = box_utils.boxes3d_to_corners3d_kitti_camera(gt_boxes_cam)
 
+    visualizer = BEVVisualizer(fig_cfg={'figsize': (10,8)})
+    # set bev image in visualizer
+    visualizer.set_bev_image()
+    # draw bev bboxes
+    visualizer.draw_bev_bboxes(pred_boxes_cam, 'feed/bev/bev.png', edge_colors='orange')
     try:
         # points = batch_dict['points'][:, 1:].cpu().numpy()
         # save_point_cloud(points, 'temp/pc.ply')
@@ -245,4 +261,4 @@ def hello():
 if __name__ == '__main__':
     load_model()
     print('init: start serving')
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=5000)
