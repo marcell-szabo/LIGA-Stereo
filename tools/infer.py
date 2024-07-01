@@ -14,6 +14,7 @@ from liga.utils import box_utils
 from liga.ops.iou3d_nms import iou3d_nms_utils
 from liga.utils.open3d_utils import save_point_cloud, save_box_corners
 from liga.visualization.bev import BEVVisualizer
+from liga.visualization.bbox  import draw_bbox
 from mmdetection_kitti.mmdet.utils.det3d.kitti_utils import boxes3d_to_bev_torch
 import copy
 
@@ -158,12 +159,7 @@ def infer2(model, start_time):
         pred_dicts, ret_dict = model(batch_dict)
     infer_end_time = time.time_ns()
     print(f'infer time: {(infer_end_time - infer_start_time) / 10**9}')
-    disp_dict = {}
-    for i in range(len(pred_dicts)):
-        print(f'{i}. dict {pred_dicts[i]["pred_boxes_2d"]}')
-        print(f'{i}. dict {pred_dicts[i]["pred_scores_2d"]}')
 
-    transform_start_time = time.time_ns()
     calib = batch_dict['calib'][0]
     # bev_boxes = box_utils.boxes3d_lidar_to_aligned_bev_boxes(pred_dicts[0]['pred_boxes'].cpu())
     # print(bev_boxes)
@@ -182,46 +178,8 @@ def infer2(model, start_time):
     visualizer.set_bev_image()
     # draw bev bboxes
     visualizer.draw_bev_bboxes(pred_boxes_cam, 'feed/bev/bev.png', edge_colors='orange')
-    try:
-        # points = batch_dict['points'][:, 1:].cpu().numpy()
-        # save_point_cloud(points, 'temp/pc.ply')
-        # gt_lineset = save_box_corners(gt_box_corners, 'temp/gt_box.ply')
-        
-        # pred_lineset = save_box_corners(pred_box_corners, 'temp/pred_box.ply')
-
-        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-        # img = (img.astype(np.float32) / 255 - mean) / std
-        img = batch_dict['left_img'][0].permute(1, 2, 0).cpu().numpy().copy()
-        #img = batch_dict['left_img'][0].cpu().numpy()
-        # Convert img to Mat format
-        img = (((img * std) + mean) * 255).astype(np.uint8)
-
-        # gt_boxes_img, gt_box_corners_img = calib.corners3d_to_img_boxes(gt_box_corners)
-        pred_boxes_img, pred_box_corners_img = calib.corners3d_to_img_boxes(pred_box_corners)
-
-
-        def draw_image_3d_rect(img, corners_img, color):
-            edges = [(0, 1), (1, 2), (2, 3), (3, 0),
-                    (4, 5), (5, 6), (6, 7), (7, 4),
-                    (0, 4), (1, 5), (2, 6), (3, 7)]
-            for edge in edges:
-                pt1 = tuple(map(int, corners_img[edge[0]]))
-                pt2 = tuple(map(int, corners_img[edge[1]]))
-                cv2.line(img, pt1, pt2, color=color, thickness=2)
-
-        # for i in gt_box_corners_img:
-        #     draw_image_3d_rect(img, i, (0, 255, 0))
-
-        for i in pred_box_corners_img:
-            draw_image_3d_rect(img, i, (255, 0, 0))
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        print(f'transorm time: {(time.time_ns() - transform_start_time) / 10**9}')
-        return img
-    except KeyboardInterrupt:
-        raise KeyboardInterrupt
-    except Exception as e:
-        print(f'nogood: {e}')
+    draw_bbox(batch_dict['left_img'][0], calib, pred_box_corners, pred_dicts[0]['pred_scores'], 'feed/images/result.png')
+    return pred_boxes_cam.tolist()
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -239,17 +197,10 @@ def predict():
         
         print(f'file saving time: {(time.time_ns() - saving_file_start_time) / 10**9}')
         saving_file_start_time = time.time_ns()
-
         # result_img = infer(model, test_loader, saving_file_start_time)
-        result_img = infer2(model, saving_file_start_time)
-
+        pred_boxes_cam = infer2(model, saving_file_start_time)
         print(f'full infer function time: {(time.time_ns() - saving_file_start_time) / 10**9}')
-        saving_file_start_time = time.time_ns()
-
-        cv2.imwrite('feed/images/result.png', result_img.astype(np.uint8))
-        print(f'result saving time: {(time.time_ns() - saving_file_start_time) / 10**9}')
-
-        return jsonify({'message': 'Prediction completed successfully'})
+        return jsonify({'message': pred_boxes_cam})
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500

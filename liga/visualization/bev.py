@@ -20,6 +20,8 @@ def tensor2ndarray(value: Union[np.ndarray, torch.Tensor]) -> np.ndarray:
     return value
 
 class BEVVisualizer:
+    scale: int = 10
+
     def __init__(self, fig_cfg: Dict[str, Any]):
         fig = Figure(**fig_cfg)
         ax = fig.add_subplot()
@@ -55,7 +57,7 @@ class BEVVisualizer:
                 self.ax_save.text(i, 0, str(np.abs(self.width/2 - i)), color='white', fontsize=8, ha='center', va='bottom')
             for j in range(0, self.height, 100):
                 self.ax_save.axhline(j, color='white', linestyle='-', linewidth=1, alpha=0.3)
-                self.ax_save.text(0, j, str(j), color='white', fontsize=8, ha='left', va='center')
+                self.ax_save.text(0, j, str(j/self.scale), color='white', fontsize=8, ha='left', va='center')
 
             # plot camera view range
             x1 = np.linspace(0, self.width / 2)
@@ -84,7 +86,6 @@ class BEVVisualizer:
     def draw_bev_bboxes(self,
                         bboxes_3d: Any,
                         path: str,
-                        scale: int = 10,
                         edge_colors: Union[str, tuple, List[str],
                                         List[tuple]] = 'o',
                         line_styles: Union[str, List[str]] = '-',
@@ -127,7 +128,7 @@ class BEVVisualizer:
         bev_bboxes = tensor2ndarray(bboxes_3d[:, [0, 2, 4, 5, 6]])
         bev_bboxes[:, -1] = -bev_bboxes[:, -1]
         # scale the bev bboxes for better visualization
-        bev_bboxes[:, :4] *= scale
+        bev_bboxes[:, :4] *= self.scale
         ctr, w, h, theta = np.split(bev_bboxes, [2, 3, 4], axis=-1)
         cos_value, sin_value = np.cos(theta), np.sin(theta)
         vec1 = np.concatenate([w / 2 * cos_value, w / 2 * sin_value], axis=-1)
